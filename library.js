@@ -35,7 +35,6 @@ Mentions.notify = function(postData) {
 
 	var cleanedContent = Mentions.clean(postData.content, true, true, true);
 	var matches = cleanedContent.match(regex);
-	console.log('new');
 
 	if (!matches) {
 		return;
@@ -45,13 +44,10 @@ Mentions.notify = function(postData) {
 
 	matches = matches.map(function(match) {
 		var slugReg = new RegExp('<a href="/community/user/([^"]*)">(' + match + ')</a>');
-		console.log(cleanedContent.match(slugReg)[1]);
 		return cleanedContent.match(slugReg)[1];
-		//return Utils.slugify(match.slice(1));
 	}).filter(function(match, index, array) {
 		return match && array.indexOf(match) === index && noMentionGroups.indexOf(match) === -1;
 	});
-	console.log(matches);
 
 	async.parallel({
 		userRecipients: function(next) {
@@ -64,7 +60,6 @@ Mentions.notify = function(postData) {
 		if (err) {
 			return;
 		}
-		console.log(results);
 
 		async.parallel({
 			topic: function(next) {
