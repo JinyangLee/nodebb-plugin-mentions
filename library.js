@@ -9,6 +9,8 @@ var	async = require('async'),
 	Groups = module.parent.require('./groups'),
 	Notifications = module.parent.require('./notifications'),
 	Utils = module.parent.require('../public/src/utils'),
+	Emailer = module.parent.require('./emailer'),
+	Meta = module.parent.require('./meta'),
 
 	SocketPlugins = module.parent.require('./socket.io/plugins'),
 
@@ -44,7 +46,7 @@ Mentions.notify = function(postData) {
 
 	matches = matches.map(function(match) {
 		var slugReg = new RegExp('<a href="/community/user/([^"]*)">(' + match + ')</a>');
-		return cleanedContent.match(slugReg)[1];
+		return cleanedContent.match(slugReg) ? cleanedContent.match(slugReg)[1] : null;
 	}).filter(function(match, index, array) {
 		return match && array.indexOf(match) === index && noMentionGroups.indexOf(match) === -1;
 	});
@@ -99,6 +101,28 @@ Mentions.notify = function(postData) {
 						return;
 					}
 					Notifications.push(notification, results.uids);
+				});
+
+				var display_url = nconf.get('display_url'),
+					base_url = display_url ? display_url : nconf.get('url'),
+					site_url = nconf.get('site_url'),
+					static_site_url = nconf.get('static_site_url');
+
+				uids.forEach(function(uid){
+					User.getUserField(uid, 'username', function(err, username){
+						Emailer.send('notif_mention', uid, {
+							pid: postData.pid,
+							subject: results.author + '在《'+ results.topic.title +'》中提到了您',
+							intro: '[[notifications:user_mentioned_you_in, ' + results.author + ', ' + results.topic.title + ']]',
+							postBody: postData.content,
+							site_title: Meta.config.title || 'NodeBB',
+							username: username,
+							url: base_url + '/topic/' + postData.tid,
+							base_url: base_url,
+							site_url: site_url,
+							static_site_url: static_site_url
+						});
+					});
 				});
 			}
 		});

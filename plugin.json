@@ -14,7 +14,5 @@
 	],
 	"less": [
 		"static/style.less"
-	],
-	"languages": "languages",
-	"defaultLang": "en_GB"
+	]
 }
