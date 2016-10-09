@@ -106,17 +106,19 @@ Mentions.notify = function(postData) {
 				var display_url = nconf.get('display_url'),
 					base_url = display_url ? display_url : nconf.get('url'),
 					site_url = nconf.get('site_url'),
-					static_site_url = nconf.get('static_site_url');
+					static_site_url = nconf.get('static_site_url'),
+					email_recent_days = 5;
 
 				uids.forEach(function(uid){
-					User.getUserField(uid, 'username', function(err, username){
+					User.getUserFields(uid, ['username', 'lastonline'], function(err, userData){
+						if( userData.lastonline > ( new Date().getTime() - (email_recent_days * 86400000) ) )	return;
 						Emailer.send('notif_mention', uid, {
 							pid: postData.pid,
 							subject: results.author + '在《'+ results.topic.title +'》中提到了您',
 							intro: '[[notifications:user_mentioned_you_in, ' + results.author + ', ' + results.topic.title + ']]',
 							postBody: postData.content,
 							site_title: Meta.config.title || 'NodeBB',
-							username: username,
+							username: userData.username,
 							url: base_url + '/topic/' + postData.tid,
 							base_url: base_url,
 							site_url: site_url,
