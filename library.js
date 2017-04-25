@@ -131,6 +131,26 @@ Mentions.notify = function(postData) {
 	});
 };
 
+var loadGroupMembers = (function loadGroup(expire = 600000) {
+	var cache = {};
+	var ts = 0;
+	return function(group, next) {
+		var now = new Date().getTime(),
+			expired = Boolean( (ts + expire) < now );
+		if (cache[group] && !expired) {
+			next(null, cache[group]);
+		} else {
+			Groups.getMembers(group, 0, -1, function(err, result){
+				if (err) return next(err, result);
+				
+				ts = new Date().getTime();
+				cache[group] = result;
+				next(null, result);
+			});
+		}
+	}
+})();
+
 function getGroupMemberUids(groupRecipients, callback) {
 	async.map(groupRecipients, function(slug, next) {
 		Groups.getGroupNameByGroupSlug(slug, next);
@@ -139,7 +159,8 @@ function getGroupMemberUids(groupRecipients, callback) {
 			return callback(err);
 		}
 		async.map(groups, function(group, next) {
-			Groups.getMembers(group, 0, -1, next);
+			//Groups.getMembers(group, 0, -1, next);
+			loadGroupMembers(group, next);
 		}, function(err, results) {
 			if (err) {
 				return callback(err);
